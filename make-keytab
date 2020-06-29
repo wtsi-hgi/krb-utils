@@ -60,6 +60,7 @@ create_keytab() {
 main() {
   local user="${1-$(whoami)}"
   local password="$(get_password "${user}")"
+  echo
 
   create_keytab "${user}" "${password}" "$(krb_realm)"
 }
