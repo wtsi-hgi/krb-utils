@@ -1,0 +1,67 @@
+#!/usr/bin/env sh
+
+# Copyright (c) 2020 Genome Research Ltd.
+#
+# Author: Christopher Harrison <ch12@sanger.ac.uk>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or (at
+# your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+set -euo pipefail
+
+source krb.rc
+
+get_password() {
+  # Prompt for user password
+  local user="$1"
+  local password
+
+  read -srp "Enter Kerberos password for ${user}: " password
+  echo "${password}"
+}
+
+create_ktutil_script() {
+  # Create the ktutil script that creates the Kerberos keytab
+  local user="$1"
+  local password="$2"
+  local krb_realm="$3"
+  local keytab="$4"
+
+  for cipher in $(krb_ciphers); do
+    echo "addent -password -p ${user}@${krb_realm} -k 1 -e ${cipher}"
+    echo "${password}"
+  done
+
+  echo "wkt ${keytab}"
+  echo "quit"
+}
+
+create_keytab() {
+  # Create a new Kerberos keytab file for user principal
+  local user="$1"
+  local password="$2"
+  local krb_realm="$3"
+  local keytab="${user}.keytab"
+
+  rm -f "${keytab}"
+  ktutil < <(create_ktutil_script "${user}" "${password}" "${krb_realm}" "${keytab}") > /dev/null
+}
+
+main() {
+  local user="${1-$(whoami)}"
+  local password="$(get_password "${user}")"
+
+  create_keytab "${user}" "${password}" "$(krb_realm)"
+}
+
+main "$@"
