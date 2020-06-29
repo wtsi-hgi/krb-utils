@@ -1,5 +1,8 @@
 # Kerberos Utilities
 
+The following will read the Kerberos configuration in `/etc/krb5.conf`.
+This can be overridden with the environment variable `KRB_CONF`.
+
 ## `make-keytab`
 
 Usage:
